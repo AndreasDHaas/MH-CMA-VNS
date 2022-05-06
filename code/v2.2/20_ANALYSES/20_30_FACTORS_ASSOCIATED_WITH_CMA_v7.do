@@ -40,7 +40,7 @@
 				}
 			
 		* Age 
-			mepoisson na_y80 ib6.age_cat || patient: , vce(robust) irr 
+			mepoisson na_y80 ib2.age_cat || patient: , vce(robust) irr 
 			contrast age_cat, effect irr
 			postsave age_cat, number(10) baselevels keep(var est varname label level id number) append("$temp/adh") sort(number0 id0) varsuffix(0)	heading	baselabel("1.00")			
 						
@@ -55,7 +55,7 @@
 			foreach j in 9 0 1 2 3 4 5  {
 				
 			* Model 
-				mepoisson na_y80 i.F`j' i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr
+				mepoisson na_y80 i.F`j' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 			* Effect table 
 				contrast F`j' age_cat sex, effect irr
@@ -67,7 +67,7 @@
 		* Individual disorders 
 			
 			* Model 
-				mepoisson na_y80 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr  
+				mepoisson na_y80 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr  
 				
 			* Effect table 
 				contrasts F0 F1 F2 F3 F4 F5 age_cat sex, effect irr
@@ -110,7 +110,7 @@
 		foreach j in 0 1 2 3 4 5 9  {
 				
 		* Model 
-			qui mepoisson na_y80 i.F`j' i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr
+			qui mepoisson na_y80 i.F`j' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 		* Effect table 
 			qui contrast F`j', effect irr
@@ -123,7 +123,7 @@
 		foreach j in 0 1 2 3 4 5 9  {
 				
 		* Model 
-			qui mepoisson na_y70 i.F`j' i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr
+			qui mepoisson na_y70 i.F`j' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 		* Effect table 
 			qui contrast F`j', effect irr
@@ -136,7 +136,7 @@
 		foreach j in 0 1 2 3 4 5 9  {
 				
 		* Model 
-			qui mepoisson na_y90 i.F`j' i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr
+			qui mepoisson na_y90 i.F`j' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 		* Effect table 
 			qui contrast F`j', effect irr
@@ -163,7 +163,7 @@
 		foreach j in 0 1 2 3 4 5 9  {
 				
 		* Model 
-			qui mepoisson na_y80 i.F`j' i.y ib6.age_cat ib2.sex ib6.age_cat#ib2.sex || patient: , vce(robust) irr
+			qui mepoisson na_y80 i.F`j' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 		* Effect table 
 			qui contrast F`j', effect irr
