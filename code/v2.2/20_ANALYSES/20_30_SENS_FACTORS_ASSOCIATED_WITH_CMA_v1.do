@@ -30,14 +30,14 @@
 			* First row 
 				lab var F0_`d' "Mental health diagnoses"
 				lab define F0 0 "No mental health diagnoses", add
-				mepoisson na_y80 i.F0_`d'##i.y || patient: , vce(robust) irr 
+				mepoisson na_y80 i.F0_`d' || patient: , vce(robust) irr 
 				contrast F0_`d', effect irr
 				postsave F0_`d', number(0) baselevels heading keep(var est varname label level id number) save("$temp/adh") varsuffix(0) ///
 				estlab("Unadjusted risk ratio (95% CI)") baselabel("1.00")	
 			
 			* Other rows 
 				foreach j in 1 2 3 4 5 9 {
-					mepoisson na_y80 i.F`j'_`d'##i.y || patient: , vce(robust) irr 
+					mepoisson na_y80 i.F`j'_`d' || patient: , vce(robust) irr 
 					contrast F`j'_`d', effect irr
 					postsave F`j'_`d', number(`j') baselevels keep(var est varname label level id number) dropcoeff(0.F`j') append("$temp/adh") sort(number0 id0) varsuffix(0) baselabel("1.00")	
 				}
@@ -48,40 +48,35 @@
 			postsave age_cat, number(10) baselevels keep(var est varname label level id number) append("$temp/adh") sort(number0 id0) varsuffix(0)	heading	baselabel("1.00")			
 						
 		* Sex  
-			mepoisson na_y80 ib2.sex|| patient: , vce(robust) irr 
+			mepoisson na_y80 ib2.sex || patient: , vce(robust) irr 
 			contrast sex, effect irr
 			postsave sex, number(11) baselevels keep(var est varname label level id number) append("$temp/adh") sort(number0 id0) varsuffix(0)	heading baselabel("1.00")	
 		
 	* Adjusted risk ratio 
 	
 		* Any mental disorders
+			foreach j in 9 0 1 2 3 4 5  {
 				
 			* Model 
-				mepoisson na_y80 i.F9_`d' ib6.age_cat ib2.sex i.y /// exposures and time 
-				i.F9_`d'#i.y i.F9_`d'#ib6.age_cat i.F9_`d'#ib2.sex /// interaction terms for mental health diagnoses by time age and sex 
-				ib6.age_cat#ib2.sex|| patient: , vce(robust) irr  // sex#age 
+				mepoisson na_y80 i.F`j'_`d' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr
 					
 			* Effect table 
-				contrast F9_`d' age_cat sex, effect irr
-				postsave F9_`d' age_cat sex, number(0) baselevels heading keep(var est varname label level id number) merge("$temp/adh") varsuffix(1)  estlab("Adjusted risk ratio (95% CI)") 	sort(number0 id0) ///
-				dropcoefficient(0.F9 h.F9) baselabel("1.00")	
+				contrast F`j'_`d' age_cat sex, effect irr
+				postsave F`j'_`d' age_cat sex, number(0) baselevels heading keep(var est varname label level id number) merge("$temp/adh") varsuffix(1) estlab("Adjusted risk ratio (95% CI)") sort(number0 id0) ///
+				dropcoefficient(0.F`j'_`d' h.F`j'_`d') baselabel("1.00") clean	
+				
+			}
 			
 		* Individual disorders 
 			
 			* Model 
-				mepoisson na_y80 i.F0_`d' i.F1_`d' i.F2_`d' i.F3_`d' i.F4_`d' i.F5_`d' ib6.age_cat ib2.sex i.y /// exposures and time 
-				i.F1#i.y  /// F1: interaction terms for mental health diagnoses by time
-				i.F2#i.y  /// F2: interaction terms for mental health diagnoses by time 
-				i.F3#i.y  /// F3: interaction terms for mental health diagnoses by time 
-				i.F4#i.y /// F4: interaction terms for mental health diagnoses by time 
-				i.F5#i.y  /// F5: interaction terms for mental health diagnoses by time 
-				ib6.age_cat#ib2.sex|| patient: , vce(robust) irr  // sex#age 
+				mepoisson na_y80 i.F0_`d' i.F1_`d' i.F2_`d' i.F3_`d' i.F4_`d' i.F5_`d' i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr  
 				
 			* Effect table 
 				contrasts F0_`d' F1_`d' F2_`d' F3_`d' F4_`d' F5_`d' age_cat sex, effect irr
 				postsave F0_`d' F1_`d' F2_`d' F3_`d' F4_`d' F5_`d' age_cat sex,  number(0) baselevels heading keep(var est varname label level id number) merge("$temp/adh") varsuffix(3)  estlab("Adjusted risk ratio (95% CI)") 	///
 				sort(number0 id0) clean dropcoefficient(h.F[0-5] 0.F[1-5]) baselabel("1.00")	
-			
+						
 	* Export table 
 			use var label est* using "$temp/adh", clear 
 			list, sep(`=_N')
