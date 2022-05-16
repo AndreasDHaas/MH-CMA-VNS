@@ -4,8 +4,15 @@
 		use "$clean/analyseWide", clear
 		keep patient art_sd start_reg start_type birth_d sex start end popgrp initiator fup
 		
+	* Age group at VL test 
+		gen age_end = floor((end-birth_d)/365)
+		egen age_end_cat = cut(age), at(15,20,25,35,45,55,65,100) label
+		lab define age_end_cat 0 "15-19" 1 "20-24" 2 "25-34" 3 "35-44" 4 "45-54" 5 "55-64" 6 "65+", replace
+		lab val age_end_cat age_end_cat 
+		lab var age_end_cat "Age at end of follow-up, y" 
+		
 	* Merge adherence
-		merge 1:m patient using "$clean/analyseCMAh", keepusing(h F9 F0 F1 F2 F3 F4 F5 age age_cat)
+		merge 1:m patient using "$clean/analyseCMAh", keepusing(h F9 F0 F1 F2 F3 F4 F5)
 		
 	* Drop patient with less than 6 months follow-up 
 		sum fup if _merge ==1
@@ -25,27 +32,23 @@
 			bysort patient (F`j'): replace F`j' = F`j'[_N]
 		}
 		
-	* ART reg
-		lab define start_type 1 "NNRTI-based" 2 "II-based" 3 "PI-based", replace
-		lab val start_type start_type
-		
 	* Keep first row 
 		bysort patient (h): keep if _n ==1
 		drop h
 		
 	* Table 
-		header age_cat, saving("$tables/MHD") percentformat(%3.1fc) freqlab("N=") clean freqf(%6.0fc)
-		percentages F9 age_cat if sex ==1, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Men") indent(2) columntotals
+		header age_end_cat, saving("$tables/MHD") percentformat(%3.1fc) freqlab("N=") clean freqf(%6.0fc)
+		percentages F9 age_end_cat if sex ==1, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Men") indent(2) columntotals
 		forvalues j = 0/5 {		
-			percentages F`j' age_cat if sex ==1, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
+			percentages F`j' age_end_cat if sex ==1, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
 		}
-		percentages F9 age_cat if sex ==2, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Women") indent(2) columntotals
+		percentages F9 age_end_cat if sex ==2, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Women") indent(2) columntotals
 		forvalues j = 0/5 {		
-			percentages F`j' age_cat if sex ==2, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
+			percentages F`j' age_end_cat if sex ==2, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
 		}
-		percentages F9 age_cat, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Both sexes") indent(2) columntotals
+		percentages F9 age_end_cat, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") heading("Both sexes") indent(2) columntotals
 		forvalues j = 0/5 {		
-			percentages F`j' age_cat, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
+			percentages F`j' age_end_cat, append("$tables/MHD") percentformat(%3.1fc) clean freqf(%6.0fc) drop("0") noheading indent(4)
 		}
 	
 	* Load and prepare table for export 
