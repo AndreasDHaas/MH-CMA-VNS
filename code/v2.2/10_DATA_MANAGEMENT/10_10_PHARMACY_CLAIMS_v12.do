@@ -634,5 +634,117 @@
 
 		* Save - accounting for stockpiling
 			save "$clean/regimen", replace
+			sort patient moddate
+			list if inlist(patient, "B000062483", "B000262118", "B001794991", "B001860013"), sepby(pat)
 				
-	
+	*** Create table with one line per regimen - no stockpiling
+			
+		* Genrate able with treatment switches 
+			use "$temp/claims3", clear
+			drop if last ==1
+			drop start end
+			sort patient med_sd 
+			list if inlist(patient, "B000062483", "B000262118", "B001794991", "B001860013")
+			list if patient =="B000000369", sepby(patient med_sd)
+			list if patient =="B000154367", sepby(patient med_sd)
+			list if patient =="B001860013", sepby(patient med_sd)
+			list if inlist(patient, "B000062483", "B000262118", "B001794991", "B001860013")
+			gunique pat // 68,895
+			rename med_sd start 
+			rename med_ed stop
+			keep patient start stop drug
+			sort patient start drug
+			list if patient =="B000004419" & start < d(01/06/2012), sepby(patient start)
+			list if patient =="B001860013", sepby(patient start)
+
+		* Expand 
+			expand 2, gen(temp)
+			sort patient start temp
+			list if patient =="B000004419" & start < d(01/06/2012), sepby(patient start)
+
+		* Reset drugstart to drugstop for added lines to find all possible switch dates
+			replace start = stop if temp==1 
+			list if patient =="B000004419" & start < d(01/06/2012), sepby(patient start)
+
+		* Keep only one of all possible treatment switch dates 
+			count // 1,505,790
+			bysort patient start: keep if _n==1
+		
+		* Keep list with all possible switch dates 
+			keep patient start
+			rename start moddate
+			list if patient =="B000000369", sepby(patient)
+			list if patient =="B001860013", sepby(patient)
+		
+		* Find corresponding drugs at each time
+
+			* Mmerge table with one line per drug 
+				mmerge patient using "$temp/claims3", ukeep(drug med_sd med_ed) 
+				drop _merge
+				sort patient moddate
+				list if patient =="B001860013", sepby(patient)
+				list if patient =="B000000369", sepby(patient moddate)
+			
+			* Copy drug to temp if patient was on drug at moddate 
+				gen temp=drug if inrange(moddate, med_sd, med_ed-1)
+
+			* Keep rows with drugs 
+				gunique pat
+				sort patient moddate drug temp
+				list if patient =="B001860013", sepby(patient moddate drug)
+				list if patient =="B000000369", sepby(patient moddate drug)
+				bysort patient moddate drug (temp): keep if _n ==_N
+				gunique pat 
+						
+		* Reshape into wide format for each moddate  
+			keep patient moddate temp 
+			bysort patient moddate (temp): gen n=_n
+			reshape wide temp, i(patient moddate) j(n)
+
+		* Drug regimen 
+			egen drug = concat(temp*) ,  punct(" ")
+			replace drug= ltrim(drug)
+			drop temp*
+
+		*Number of drugs 
+			gen num_art= wordcount(drug)
+			
+		*List
+			list if patient =="B001860013", sepby(patient moddate drug)
+					
+		* Drug class
+			gen ei = regexm(drug, "MVC")
+			gen ii = regexm(drug, "DTG") | regexm(drug, "RGV")
+			gen pi = regexm(drug, "ATV") | regexm(drug, "DRV") | regexm(drug, "LPV") | regexm(drug, "SQV") 
+			gen nnrti = regexm(drug, "EFV") | regexm(drug, "ETV") | regexm(drug, "NVP") | regexm(drug, "RPV") 
+			gen base = ei==1 | ii==1 | pi==1 | nnrti==1 
+			gen nrti = 0
+			foreach j in ABC AZT D4T DDI TDF TAF 3TC FTC {
+				replace nrti = nrti + 1 if regexm(drug, "`j'")
+			}
+				
+		* ART 
+			gen art = 0 
+			replace art = 1 if base ==1 & nrti >=2
+			replace art = 1 if regexm(drug, "DTG") & regexm(drug, "RPV")
+			replace art = 1 if regexm(drug, "DTG") & regexm(drug, "3TC")
+			replace art = 1 if regexm(drug, "DTG") & regexm(drug, "FTC")
+				
+		* ART type  
+			gen art_type = . 
+			replace art_type = 1 if nnrti ==1 & nrti >=2
+			replace art_type = 3 if pi ==1 & nrti >=2
+			replace art_type = 2 if ii ==1 & nrti >=1	
+			replace art_type = 4 if art_type ==. & drug !=""
+			replace art_type = 9 if drug ==""
+			lab define art_type 1 "NNRTI+2NRTI" 2 "II+NRTI" 3 "PI+2NRTI" 4 "Other" 9 "None", replace
+			lab val art_type art_type
+			tab art_type
+			tab drug if art_type ==3, sort mi
+							
+		* Clean 
+			drop ei ii pi nnrti base nrti num_art
+
+		* Save - not accounting for stockpiling
+			save "$clean/regimen3", replace
+				
