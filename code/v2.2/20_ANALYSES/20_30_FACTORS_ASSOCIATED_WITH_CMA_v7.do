@@ -67,12 +67,27 @@
 		* Individual disorders 
 			
 			* Model 
-				mepoisson na_y80 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr  
+				mepoisson na_y80 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.y ib2.age_cat ib2.sex ib2.age_cat#ib2.sex || patient: , vce(robust) irr 
+				lab define F0 0 "No mental disorder", modify
+				lab val F0 F0
+				coefplot, drop(_cons *.y *#* 0.F1 0.F2 0.F3 0.F4 0.F5) xline(1) eform baselevels scheme(cleanplots) ///
+				headings(0.F0 = "{bf:Mental health}"                     ///
+				1.sex = "{bf:Sex}"                        ///
+				0.age_cat= "{bf:Age}") scale(1.5)
 				
 			* Effect table 
 				contrasts F0 F1 F2 F3 F4 F5 age_cat sex, effect irr
 				postsave F0 F1 F2 F3 F4 F5 age_cat sex,  number(0) baselevels heading keep(var est varname label level id number) merge("$temp/adh") varsuffix(2)  estlab("Adjusted risk ratio (95% CI)") 	///
 				sort(number0 id0) clean dropcoefficient(h.F[0-5] 0.F[1-5]) baselabel("1.00")	
+			
+		* Plot  estimates
+			mepoisson na_y80 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.y ib5.age_cat ib2.sex ib5.age_cat#ib2.sex || patient: , vce(robust) irr 
+			lab define F0 0 "No mental disorder", modify
+			lab val F0 F0
+			coefplot, drop(_cons *.y *#* 0.F1 0.F2 0.F3 0.F4 0.F5) xline(1) eform baselevels scheme(cleanplots) ///
+			headings(0.F0 = "{bf:Mental health}"                     ///
+			1.sex = "{bf:Sex}"                        ///
+			0.age_cat= "{bf:Age}") scale(1.5)  mcolor("$blue") ciopts(color("$blue")) msymbol(D) msize(*.8)
 			
 	* Export table 
 			use var label est* using "$temp/adh", clear 

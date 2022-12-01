@@ -58,8 +58,17 @@
 				dropcoefficient(h.F`j' 0.F`j') clean
 			}
 			
+		* Plot estimates
+			mepoisson vf400 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.YOA ib5.age_cat##ib2.sex || patient: , vce(robust) irr  
+				lab define F0 0 "No mental disorder", modify
+				lab val F0 F0
+				coefplot, drop(_cons *.YOA *#* 0.F1 0.F2 0.F3 0.F4 0.F5) xline(1) eform baselevels scheme(cleanplots) ///
+				headings(0.F0 = "{bf:Mental health}"                     ///
+				1.sex = "{bf:Sex}"                        ///
+				0.age_cat= "{bf:Age}") scale(1.5) mcolor("$blue") ciopts(color("$blue")) msymbol(D) msize(*.8)
+				
 		* Multivariable analysis: adjusted for age sex yoa and MH 
-			qui mepoisson vf400 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.YOA ib2.age_cat##ib2.sex || patient: , vce(robust) irr  
+			qui mepoisson vf400 i.F0 i.F1 i.F2 i.F3 i.F4 i.F5 i.YOA ib2.age_cat##ib2.sex || patient: , vce(robust) irr  			
 			qui contrasts F0 F1 F2 F3 F4 F5 age_cat sex, effect irr
 			postsave F0 F1 F2 F3 F4 F5 age_cat sex, ciseparator("-") number(1) baselevels keep(var est varname label level id number) merge("$temp/vf400") varsuffix(3) heading baselabel("1.00") sort(number0 id0) estlab("aRR (95% CI)") ///
 			dropcoefficient(h.F[0-5] 0.F[0-5]) clean
