@@ -17,7 +17,7 @@
 	*Folders 
 		global do "C:/Users/haas/Dropbox/Do"
 		global science "C:/Users/haas/Dropbox/Science"
-		global data "C:/Data"
+		global data "D:/Data"
 		
 	* ADO 
 		sysdir set PERSONAL "C:/Repositories/MH-CMA-VNS/code/v2.2/90_ADO"
